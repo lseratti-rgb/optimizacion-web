@@ -13,6 +13,7 @@ Uso:
   python3 tiendanube/tn.py productos
   python3 tiendanube/tn.py clientes
   python3 tiendanube/tn.py resumen   --desde 2026-09-01 --hasta 2026-09-30
+  python3 tiendanube/tn.py crudo     --tienda Desebia --estado-pago any   # JSON completo
 
 Los CSV se guardan en datos/ (ignorado por git), con una columna "tienda".
 """
@@ -21,6 +22,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -243,6 +245,17 @@ def cmd_clientes(clients, args):
     write_csv("clientes.csv", rows)
 
 
+def cmd_crudo(clients, args):
+    """Pedidos completos en JSON (todos los campos de la API), para análisis a medida."""
+    OUT_DIR.mkdir(exist_ok=True)
+    for store, c in clients:
+        orders = fetch_orders(c, args)
+        slug = re.sub(r"[^a-z0-9]+", "-", store["name"].lower()).strip("-")
+        path = OUT_DIR / f"pedidos_{slug}_{store['store_id']}.json"
+        path.write_text(json.dumps(orders, ensure_ascii=False))
+        print(f"{store['name']}: {len(orders)} pedidos -> {path.relative_to(ROOT.parent)}")
+
+
 def cmd_resumen(clients, args):
     rows = []
     for store, c in clients:
@@ -274,7 +287,7 @@ def cmd_resumen(clients, args):
 
 def main():
     parser = argparse.ArgumentParser(description="Datos multi-tienda de Tiendanube")
-    parser.add_argument("comando", choices=["tiendas", "pedidos", "productos", "clientes", "resumen"])
+    parser.add_argument("comando", choices=["tiendas", "pedidos", "productos", "clientes", "resumen", "crudo"])
     parser.add_argument("--desde", help="YYYY-MM-DD (fecha de creación)")
     parser.add_argument("--hasta", help="YYYY-MM-DD, inclusive")
     parser.add_argument("--tienda", action="append", help="Filtrar por nombre o store_id (repetible)")
@@ -295,7 +308,7 @@ def main():
 
     clients = [(s, Client(s["store_id"], s["token"], user_agent)) for s in stores]
     {"tiendas": cmd_tiendas, "pedidos": cmd_pedidos, "productos": cmd_productos,
-     "clientes": cmd_clientes, "resumen": cmd_resumen}[args.comando](clients, args)
+     "clientes": cmd_clientes, "resumen": cmd_resumen, "crudo": cmd_crudo}[args.comando](clients, args)
 
 
 if __name__ == "__main__":

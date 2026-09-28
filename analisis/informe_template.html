@@ -1,0 +1,497 @@
+<title>Desebia Análisis de Ventas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+/* Layout: informe de una columna (máx. 1000px), secciones numeradas según el orden del análisis, cajas grises de lectura al cierre de cada una. Identidad Be Perfo: solo tema oscuro, por decisión de marca. */
+:root {
+  --bg: #282828;
+  --surface: #323232;
+  --surface-2: #3b3b3b;
+  --line: #474747;
+  --fg: #ffffff;
+  --muted: #b9b9b0;
+  --accent: #ACD400;
+  --accent-ink: #1d1d1d;
+  --up: #ACD400;
+  --down: #ff7a6b;
+  --warn: #f2c94c;
+  --display: "Bebas Neue", "Oswald", Impact, "Arial Narrow", sans-serif;
+  --body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1000px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; letter-spacing: .02em; line-height: 1; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(3rem, 9vw, 5.6rem); }
+h2 { font-size: clamp(2rem, 5vw, 2.8rem); }
+h3 { font-size: 1.5rem; color: var(--accent); }
+p { margin: 0; max-width: 68ch; }
+.num, td.n, th.n, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-family: var(--mono); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+small, .small { font-size: .85rem; }
+
+header.top { display: grid; gap: 14px; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+header.top .meta { display: flex; flex-wrap: wrap; gap: 8px 22px; font-family: var(--mono); font-size: .85rem; color: var(--muted); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; }
+nav.toc a { font-family: var(--mono); font-size: .75rem; color: var(--muted); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); outline: none; }
+
+section { display: grid; gap: 20px; padding-block: 44px; border-bottom: 1px solid var(--line); }
+section > * { min-width: 0; }
+.sec-head { display: grid; gap: 6px; }
+.lead { font-size: 1.08rem; }
+.lead strong, p strong { color: var(--accent); font-weight: 700; }
+
+.diag { background: var(--accent); color: var(--accent-ink); padding: 24px; border-radius: 4px; display: grid; gap: 10px; }
+.diag .eyebrow { color: var(--accent-ink); opacity: .75; }
+.diag p { font-size: clamp(1.15rem, 2.6vw, 1.4rem); line-height: 1.35; font-weight: 500; max-width: none; }
+.diag strong { color: var(--accent-ink); font-weight: 700; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 12px; }
+.tile { background: var(--surface); padding: 16px; border-radius: 4px; display: grid; gap: 4px; align-content: start; }
+.tile .label { font-size: .8rem; color: var(--muted); }
+.tile .value { font-family: var(--mono); font-size: 1.6rem; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.tile .sub { font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+.delta { font-family: var(--mono); font-size: .9rem; font-weight: 500; }
+.delta.up { color: var(--up); } .delta.down { color: var(--down); } .delta.flat { color: var(--muted); }
+
+.read { background: var(--surface-2); border-radius: 4px; padding: 18px 20px; display: grid; gap: 8px; }
+.read .eyebrow { color: var(--muted); }
+.read p { max-width: none; }
+.hyp { color: var(--warn); font-family: var(--mono); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--warn); border-radius: 3px; padding: 1px 6px; white-space: nowrap; }
+
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.two > * { min-width: 0; }
+.card { background: var(--surface); padding: 18px; border-radius: 4px; display: grid; gap: 8px; align-content: start; }
+.card .big { font-family: var(--mono); font-size: 2rem; }
+
+ul.bul { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; max-width: 72ch; }
+ul.bul li::marker { color: var(--accent); }
+
+.chart { position: relative; height: 300px; background: var(--surface); border-radius: 4px; padding: 14px; }
+.chart.tall { height: 360px; }
+.chart.short { height: 240px; }
+.chart canvas { max-width: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .8rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+
+.tbl { overflow-x: auto; border-radius: 4px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--mono); font-weight: 400; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+td.n, th.n { text-align: right; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+tr.hl td { background: rgba(172, 212, 0, .10); }
+tr.weak td { color: var(--muted); }
+.bar { display: inline-block; height: 8px; border-radius: 2px; background: var(--accent); vertical-align: middle; }
+.bar.alt { background: var(--muted); }
+.pill { display: inline-block; font-family: var(--mono); font-size: .7rem; letter-spacing: .06em; padding: 2px 7px; border-radius: 3px; white-space: nowrap; }
+.pill.alta { background: var(--accent); color: var(--accent-ink); }
+.pill.media { background: var(--surface-2); color: var(--fg); border: 1px solid var(--muted); }
+.pill.cond { color: var(--warn); border: 1px solid var(--warn); }
+.pill.ok { color: var(--up); border: 1px solid var(--up); }
+.pill.no { color: var(--down); border: 1px solid var(--down); }
+.pill.low { color: var(--muted); border: 1px solid var(--line); }
+
+.windows { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.win { border: 1px solid var(--line); border-radius: 4px; padding: 18px; display: grid; gap: 8px; align-content: start; }
+.win.primary { border-color: var(--accent); }
+.win .day { font-family: var(--display); font-size: 3rem; line-height: .9; color: var(--accent); }
+
+ol.recs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+ol.recs li { background: var(--surface); border-radius: 4px; padding: 14px 16px; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: start; }
+ol.recs li > div { min-width: 0; display: grid; gap: 4px; }
+ol.recs .src { font-family: var(--mono); font-size: .72rem; color: var(--muted); }
+ol.recs b { font-weight: 700; }
+
+.decisions { display: grid; gap: 10px; counter-reset: d; }
+.decision { display: grid; grid-template-columns: 56px 1fr; gap: 14px; align-items: start; background: var(--surface); padding: 16px; border-radius: 4px; }
+.decision::before { counter-increment: d; content: counter(d); font-family: var(--display); font-size: 2.8rem; line-height: .9; color: var(--accent); }
+.decision > div { display: grid; gap: 4px; min-width: 0; }
+ol.qs { margin: 0; padding-left: 1.3em; display: grid; gap: 8px; max-width: 76ch; }
+ol.qs li::marker { color: var(--accent); font-family: var(--mono); }
+footer { padding-top: 28px; font-size: .82rem; color: var(--muted); display: grid; gap: 6px; }
+footer p { max-width: 90ch; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) {
+  .wrap { padding-inline: 16px; }
+  .chart { height: 260px; } .chart.tall { height: 300px; }
+  .decision { grid-template-columns: 40px 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <span class="eyebrow">Be Perfo · Análisis de ventas Tiendanube</span>
+  <h1>Desebia</h1>
+  <div class="meta">
+    <span>Período: 09/12/2024 → 28/09/2026</span>
+    <span>778 órdenes pagas · 681 clientas</span>
+    <span>Fuente: API Tiendanube + Meta Ads</span>
+    <span>Informe al 28/09/2026</span>
+  </div>
+  <nav class="toc" aria-label="Secciones">
+    <a href="#resumen">Resumen</a><a href="#kpis">KPIs</a><a href="#mensual">Evolución</a><a href="#recurrencia">Recurrencia</a>
+    <a href="#vip">Club VIP</a><a href="#recompra">Recompra</a><a href="#reactivacion">Reactivación</a><a href="#pago">Pago y geografía</a>
+    <a href="#geo">Meta por región</a><a href="#cpm">CPM</a><a href="#productos">Productos</a><a href="#bundles">Bundles</a>
+    <a href="#acciones">Recomendaciones</a><a href="#cierre">Cierre</a>
+  </nav>
+</header>
+
+<!-- 0 -->
+<section id="resumen">
+  <div class="sec-head"><span class="eyebrow">00 · Resumen ejecutivo</span><h2>Vende más, pero cada venta cuesta el doble y casi nadie vuelve</h2></div>
+  <div class="diag">
+    <span class="eyebrow">Diagnóstico</span>
+    <p>La base crece pero no repite: <strong>solo 8% de las clientas vuelve a comprar</strong>, y el 81% de la facturación viene de clientas de una sola compra. Al mismo tiempo, entre abril y septiembre la inversión en Meta se duplicó contra 2025 mientras la facturación en dólares creció 18%: <strong>el costo por venta pasó de USD 14,5 a USD 28,5</strong>.</p>
+  </div>
+  <p class="muted small">Variaciones abr–sep 2026 vs. abr–sep 2025. La facturación se compara en USD porque en pesos la inflación la infla (en ARS nominales creció +43%).</p>
+  <div class="tiles">
+    <div class="tile"><span class="label">Facturación USD</span><span class="value">36.369</span><span class="delta up">▲ +18%</span><span class="sub">vs 30.808</span></div>
+    <div class="tile"><span class="label">Inversión Meta USD</span><span class="value">5.323</span><span class="delta down">▲ +114%</span><span class="sub">vs 2.488</span></div>
+    <div class="tile"><span class="label">Costo por venta est.</span><span class="value">28,5</span><span class="delta down">▲ ×2,0</span><span class="sub">vs USD 14,5</span></div>
+    <div class="tile"><span class="label">Órdenes de recurrentes</span><span class="value">14,4%</span><span class="delta up">▲ +5,7 pp</span><span class="sub">vs 8,7%</span></div>
+  </div>
+  <div class="card">
+    <h3>Prioridades del período</h3>
+    <ul class="bul">
+      <li><b>Reactivar a la cohorte de fiestas 2025.</b> 209 clientas de una sola compra entran ahora en la ventana de último llamado (270–330 días), justo antes de la temporada de fiestas.</li>
+      <li><b>Empujar la segunda prenda en la primera compra.</b> Quien arranca con 2 o más unidades recompra el doble (13,2% vs 6,8%) y su orden vale +76%.</li>
+      <li><b>Frenar la suba de inversión hasta entender el CPM.</b> El CPM subió 66% y la conversión por impresión cayó 16%.</li>
+      <li><b>Mover presupuesto hacia CABA.</b> Recibe el 31% de la inversión y genera el 39% de la facturación.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 1 -->
+<section id="kpis">
+  <div class="sec-head"><span class="eyebrow">01 · KPIs generales</span><h2>21 meses de venta online</h2></div>
+  <div class="tiles">
+    <div class="tile"><span class="label">Facturación total</span><span class="value">$159,4M</span><span class="sub">USD 116.339</span></div>
+    <div class="tile"><span class="label">Órdenes pagas</span><span class="value">778</span><span class="sub">976 unidades</span></div>
+    <div class="tile"><span class="label">Clientas únicas</span><span class="value">681</span><span class="sub">1,14 órdenes c/u</span></div>
+    <div class="tile"><span class="label">Ticket promedio</span><span class="value">$204.904</span><span class="sub">USD 150</span></div>
+    <div class="tile"><span class="label">Tasa de recompra</span><span class="value">7,3%</span><span class="sub">8,0% con 60+ días de margen</span></div>
+    <div class="tile"><span class="label">Período</span><span class="value">21 meses</span><span class="sub">dic-24 → sep-26</span></div>
+  </div>
+  <p class="muted small">Se excluyeron 74 pedidos cancelados, pendientes o reembolsados. 31 pedidos de la misma clienta hechos con menos de 2 días de diferencia se cuentan como una sola ocasión de compra, para no inflar la recompra.</p>
+  <div class="read"><span class="eyebrow">Qué significa esto</span>
+    <p>Desebia es una marca de ticket alto (USD 150 por orden, casi 1,3 prendas) que vive de clientas nuevas. Cada clienta compra en promedio 1,14 veces. El negocio depende de adquirir todo el tiempo, y por eso la suba del costo de adquisición le pega tan directo.</p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="mensual">
+  <div class="sec-head"><span class="eyebrow">02 · Evolución mensual</span><h2>Un pico en fiestas y una meseta en 2026</h2></div>
+  <div class="legend"><span><i style="background:var(--accent)"></i>Facturación USD</span><span><i style="background:#ffffff"></i>Órdenes</span></div>
+  <div class="chart tall"><canvas id="chMensual" aria-label="Facturación en USD y órdenes por mes"></canvas></div>
+  <div class="two">
+    <div class="card">
+      <span class="eyebrow">Mejor mes</span>
+      <span class="big">Dic 2025</span>
+      <span class="mono">USD 17.540 · 149 órdenes · 120 clientas nuevas</span>
+      <p><span class="hyp">Hipótesis</span> Coinciden la temporada de fiestas y fin de año, que es la ocasión natural de sus vestidos, con el arrastre de CyberMonday de noviembre (107 órdenes). También fue el mes de CPM más bajo (USD 3,15). Los datos no muestran si hubo un lanzamiento o una campaña puntual.</p>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Peor mes</span>
+      <span class="big">Sep 2025</span>
+      <span class="mono">USD 785 · 8 órdenes</span>
+      <p><span class="hyp">Hipótesis</span> No fue un problema de costo de medio: el CPM estuvo bajo (USD 3,86). Las causas más probables son un cambio de temporada sin colección nueva y el contexto preelectoral de septiembre 2025. Ninguna de las dos se puede comprobar con estos datos.</p>
+    </div>
+  </div>
+  <div class="read"><span class="eyebrow">Qué significa esto</span>
+    <p>Después del pico de noviembre y diciembre, 2026 nunca volvió a ese nivel: se estabilizó entre 23 y 38 órdenes por mes, con un ticket más alto. La marca tiene una estacionalidad clara hacia fin de año. Octubre a diciembre es la ventana donde conviene tener stock, creatividades y la campaña de reactivación listas.</p>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="recurrencia">
+  <div class="sec-head"><span class="eyebrow">03 · Recurrencia de compra</span><h2>93 de cada 100 clientas compraron una sola vez</h2></div>
+  <div class="two">
+    <div class="chart short" title="Escala logarítmica"><canvas id="chRec" aria-label="Clientas por cantidad de compras"></canvas></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Umbral</th><th class="n">Clientas</th><th class="n">% base</th><th class="n">Retiene del nivel anterior</th></tr></thead>
+      <tbody id="tbUmbrales"></tbody>
+    </table></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Segmento</th><th class="n">Clientas</th><th class="n">Facturación USD</th><th class="n">% facturación</th><th class="n">Valor por clienta</th></tr></thead>
+    <tbody>
+      <tr><td>1 compra</td><td class="n">631</td><td class="n">94.779</td><td class="n">81,5%</td><td class="n">USD 150</td></tr>
+      <tr><td>2 compras</td><td class="n">40</td><td class="n">12.015</td><td class="n">10,3%</td><td class="n">USD 300</td></tr>
+      <tr class="hl"><td>3 o más</td><td class="n">10</td><td class="n">9.545</td><td class="n">8,2%</td><td class="n">USD 954</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted small">El gráfico usa escala logarítmica para que se vean los grupos chicos.</p>
+  <div class="read"><span class="eyebrow">Qué significa esto</span>
+    <p>El 1,5% de la base (10 clientas) aporta el 8,2% de la facturación y vale 6,4 veces lo que una clienta de una sola compra. Pasar a una clienta de 1 a 2 compras duplica su valor. Ahí está la palanca más barata: la clienta ya está adquirida y ya confió en la marca.</p>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="vip">
+  <div class="sec-head"><span class="eyebrow">04 · Club VIP</span><h2>El corte está en 3 compras</h2></div>
+  <p class="lead">La caída más grande de toda la curva es de 1 a 2 compras: solo el 7,3% da el segundo paso. Pero esa caída describe el problema general de recompra, no a las clientas VIP. <strong>Entre las que sí repiten, el quiebre más marcado está de 2 a 3 compras</strong>: solo 1 de cada 5 sigue (retiene 20%). De 3 a 4 retiene 30%, una caída menor.</p>
+  <div class="two">
+    <div class="card"><span class="eyebrow">Corte elegido</span><span class="big">3+ compras</span><span class="mono">10 clientas · USD 954 por clienta</span><p>Quien llega a la tercera compra ya cruzó el filtro más duro. Es el grupo que la marca debería reconocer por su nombre.</p></div>
+    <div class="card"><span class="eyebrow">Por qué no otro corte</span><p><b>2+ (50 clientas):</b> mezcla recompradoras ocasionales con clientas fieles, y parte de las segundas compras podrían ser cambios o complementos.</p><p><b>4+ (3 clientas):</b> es demasiado chico para armar un programa.</p></div>
+  </div>
+  <div class="read"><span class="eyebrow">Qué significa esto</span>
+    <p>El club VIP de Desebia hoy es chico: sirve para reconocer y cuidar a las clientas que más valen, no para mover volumen. Su valor está en convertir a las 40 clientas de 2 compras en clientas de 3. Tener un objetivo concreto ("llegá a tu tercera compra") le da un motivo a esa segunda recompra.</p>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="recompra">
+  <div class="sec-head"><span class="eyebrow">05 · Por qué no llegan a la segunda compra</span><h2>La recompra real es 8%</h2></div>
+  <p class="lead">Se midió sobre las 616 clientas cuya primera compra tiene al menos 60 días de margen (hasta el 30/07/2026): <strong>49 volvieron a comprar (8,0%)</strong>, y solo el 4,9% lo hizo dentro de los 90 días. Como referencia, en moda online la recompra anual suele rondar el 20–30%. Es un orden de magnitud, no un benchmark verificado de su categoría.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Variable de la primera compra</th><th>Valor</th><th class="n">Clientas</th><th class="n">Recompra</th><th></th><th>Lectura</th></tr></thead>
+    <tbody id="tbCorr"></tbody>
+  </table></div>
+  <h3>Producto de entrada</h3>
+  <p class="muted small">Recompra según el producto de la primera compra (solo productos con 12 o más clientas de entrada). Las bases son chicas: tomar como dirección, no como dato firme.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Producto de la 1ª compra</th><th class="n">Clientas</th><th class="n">Recompra</th><th></th></tr></thead>
+    <tbody id="tbEntrada"></tbody>
+  </table></div>
+  <div class="read"><span class="eyebrow">Qué significa esto</span>
+    <p>La recompra no depende de la logística ni del dispositivo: retiro y envío dan exactamente lo mismo (7,8%), y CABA, provincia e interior también. Lo que sí la mueve es <b>cuánto y qué se compra la primera vez</b>. Quien se lleva 2 o más prendas vuelve el doble. Quien entra por un set o un tapado vuelve más que quien entra por un vestido de ocasión como Hera o Ámbar. <span class="hyp">Hipótesis</span> Esos vestidos se compran para un evento puntual y la clienta no vuelve a necesitar la marca hasta el próximo evento.</p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="reactivacion">
+  <div class="sec-head"><span class="eyebrow">06 · Campaña de clientas pasadas</span><h2>Cuándo vuelven las que vuelven</h2></div>
+  <div class="tiles">
+    <div class="tile"><span class="label">Mediana</span><span class="value">60 días</span><span class="sub">1ª → 2ª compra</span></div>
+    <div class="tile"><span class="label">Percentil 75</span><span class="value">170 días</span></div>
+    <div class="tile"><span class="label">Percentil 90</span><span class="value">295 días</span></div>
+    <div class="tile"><span class="label">Máximo observado</span><span class="value">330 días</span><span class="sub">n = 50 recompradoras</span></div>
+  </div>
+  <div class="chart short"><canvas id="chGap" aria-label="Días entre primera y segunda compra"></canvas></div>
+  <p class="muted small">17 de las 50 vuelven dentro de los 15 días. <span class="hyp">Hipótesis</span> Son complementos o cambios de talle; conviene validarlo con el equipo. Después hay una segunda ola entre los 120 y 330 días, que coincide con la temporada siguiente.</p>
+  <div class="windows">
+    <div class="win primary">
+      <span class="eyebrow">Envío 1 · Primer impacto</span>
+      <span class="day">Día 60</span>
+      <p><b>Sin cupón agresivo.</b> Novedades y prendas que completan lo que compró. Mandarlo el día 60 cae en la mediana: la mitad de las que vuelven ya volvió sola, y la otra mitad todavía está en su ventana natural. Antes sería redundante con la ola de complementos de los primeros 15 días.</p>
+      <span class="mono small muted">Hoy en ventana (45–75 días): 22 clientas</span>
+    </div>
+    <div class="win">
+      <span class="eyebrow">Envío 2 · Último llamado</span>
+      <span class="day">Día 300</span>
+      <p><b>Con cupón.</b> Cerca del percentil 90 (295 días) y antes del máximo observado (330). Pasado ese punto no hay recompra orgánica, así que el descuento no canibaliza ventas que iban a llegar solas. Diez meses después de la compra es además la misma temporada del año siguiente.</p>
+      <span class="mono small muted">Hoy en ventana (270–330 días): 209 clientas</span>
+    </div>
+  </div>
+  <div class="read"><span class="eyebrow">Qué significa esto</span>
+    <p>La ventana del último llamado hoy es enorme (209 clientas) porque ahí está la cohorte de noviembre y diciembre de 2025, que entra en el día 270–330 justo en octubre, antes de las fiestas. Es la oportunidad de reactivación más grande que va a tener la marca en el año. Otras 170 clientas ya superaron los 330 días: para ellas la recompra orgánica es prácticamente nula.</p>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="pago">
+  <div class="sec-head"><span class="eyebrow">07 · Forma de pago, cuotas y geografía</span><h2>Tarjeta en 3 cuotas, AMBA y showroom</h2></div>
+  <div class="two">
+    <div class="tbl"><table><thead><tr><th>Forma de pago</th><th class="n">Órdenes</th><th class="n">%</th><th class="n">Ticket USD</th></tr></thead><tbody id="tbPago"></tbody></table></div>
+    <div class="tbl"><table><thead><tr><th>Cuotas</th><th class="n">Órdenes</th><th class="n">%</th><th class="n">Ticket USD</th></tr></thead><tbody id="tbCuotas"></tbody></table></div>
+    <div class="tbl"><table><thead><tr><th>Entrega</th><th class="n">Órdenes</th><th class="n">%</th><th class="n">Ticket USD</th></tr></thead><tbody id="tbEntrega"></tbody></table></div>
+    <div class="tbl"><table><thead><tr><th>Zona</th><th class="n">Órdenes</th><th class="n">%</th><th class="n">Ticket USD</th></tr></thead><tbody id="tbZona"></tbody></table></div>
+  </div>
+  <div class="tbl"><table><thead><tr><th>Provincia</th><th class="n">Órdenes</th><th class="n">%</th><th></th></tr></thead><tbody id="tbProv"></tbody></table></div>
+  <div class="read"><span class="eyebrow">Qué significa esto</span>
+    <p>La mitad de las órdenes se paga en 3 cuotas, con un ticket 21% más alto que el pago en una sola cuota: la financiación sostiene el ticket. El 37,5% retira en el showroom o en un punto de pickup, así que el showroom es un canal real de la marca y un punto de contacto para fidelizar. El 77% de las ventas es de AMBA; en el interior, Córdoba y Santa Fe son los únicos mercados con volumen. El 80% compra desde el celular.</p>
+  </div>
+</section>
+
+<!-- 8 -->
+<section id="geo">
+  <div class="sec-head"><span class="eyebrow">08 · Inversión Meta vs. conversión por región</span><h2>CABA rinde más de lo que recibe</h2></div>
+  <p class="muted small">Abril 2025 a septiembre 2026: USD 11.068 de inversión y 766 órdenes. El costo por venta y el ROAS son <b>estimaciones direccionales</b>. Cruzan dos fuentes distintas: Meta asigna la inversión por la ubicación de quien vio el anuncio, y Tiendanube cuenta todas las ventas confirmadas, incluidas las que no vinieron de Meta. No es atribución exacta.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Región</th><th class="n">% inversión</th><th class="n">% facturación</th><th></th><th class="n">Órdenes</th><th class="n">Costo x venta USD</th><th class="n">ROAS est.</th><th>Lectura</th></tr></thead>
+    <tbody id="tbGeo"></tbody>
+  </table></div>
+  <div class="read"><span class="eyebrow">Qué significa esto</span>
+    <p><b>CABA está subrepresentada.</b> Recibe el 31,4% de la inversión y genera el 38,5% de la facturación, con el mejor ROAS de las regiones grandes (12,7). <b>Provincia de Buenos Aires tiene la situación inversa</b>: 41,4% del gasto para el 38,2% de la facturación (ROAS 9,6). Corrientes, Formosa, Chaco, La Pampa y Jujuy suman unos USD 280 con casi ninguna venta. Chubut, Misiones y San Luis rinden bien, pero con 4 a 10 órdenes no alcanza para concluir.</p>
+  </div>
+</section>
+
+<!-- 9 -->
+<section id="cpm">
+  <div class="sec-head"><span class="eyebrow">09 · Fluctuación del CPM en Meta</span><h2>El medio se encareció en 2026</h2></div>
+  <div class="legend"><span><i style="background:var(--accent)"></i>CPM USD</span><span><i style="background:#8a8a82"></i>Órdenes Tiendanube</span></div>
+  <div class="chart tall"><canvas id="chCpm" aria-label="CPM mensual y órdenes"></canvas></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Abr–Sep</th><th class="n">Inversión USD</th><th class="n">CPM</th><th class="n">Órdenes cada 1.000 impr.</th><th class="n">Costo x venta est.</th><th class="n">ROAS est.</th></tr></thead>
+    <tbody>
+      <tr><td>2025</td><td class="n">2.488</td><td class="n">4,58</td><td class="n">0,32</td><td class="n">14,5</td><td class="n">12,4</td></tr>
+      <tr class="hl"><td>2026</td><td class="n">5.323</td><td class="n">7,60</td><td class="n">0,27</td><td class="n">28,5</td><td class="n">6,8</td></tr>
+      <tr><td>Variación</td><td class="n">+114%</td><td class="n">+66%</td><td class="n">−16%</td><td class="n">×2,0</td><td class="n">−45%</td></tr>
+    </tbody>
+  </table></div>
+  <div class="read"><span class="eyebrow">Qué significa esto</span>
+    <p>El CPM es un costo de exposición, no de resultado. Un CPM alto no implica peor eficiencia si la conversión se sostiene, pero acá no se sostuvo. El costo por venta se duplicó por dos causas: <b>unos dos tercios se explican por el CPM</b> (+66%), y el resto por una caída de 16% en las órdenes por cada mil impresiones. Lo contrario muestra septiembre 2025: tuvo un CPM bajo y el peor mes de ventas, porque ahí el problema no fue el medio sino la oferta o el momento. Y noviembre–diciembre 2025 combinó un CPM mínimo con la demanda más alta.</p>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="productos">
+  <div class="sec-head"><span class="eyebrow">10 · Top productos</span><h2>Hera y Vita en unidades, Montana en dólares</h2></div>
+  <p class="muted small">Productos agrupados por modelo base, sin distinguir color ni talle (por ejemplo, Hera Wild Skin, Hera Blossom y Hera Off White suman como Vestido Hera). Se mantienen separadas las versiones mini y largo.</p>
+  <div class="chart tall"><canvas id="chProd" aria-label="Top 15 productos por unidades"></canvas></div>
+  <div class="read"><span class="eyebrow">Qué significa esto</span>
+    <p>Vestido Hera y Vestido Vita son el 20% de las unidades: son la puerta de entrada de la marca. Campera Montana, con la mitad de unidades, es el producto que más factura (USD 13.302), y los abrigos (Montana, Mica, Muse, Mila) aportan mucha facturación con poco volumen. Hera y Ámbar venden mucho pero casi no generan recompra (sección 05). Los productos que más atraen no son los que más fidelizan.</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="bundles">
+  <div class="sec-head"><span class="eyebrow">11 · Bundles orgánicos</span><h2>Los tocados se llevan con algo</h2></div>
+  <div class="tiles">
+    <div class="tile"><span class="label">Órdenes con 2+ productos</span><span class="value">17,5%</span><span class="sub">136 órdenes</span></div>
+    <div class="tile"><span class="label">Ticket combinado</span><span class="value">USD 232</span><span class="delta up">+76% vs USD 132</span></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Quienes compran…</th><th>…también llevan</th><th class="n">Órdenes juntas</th><th class="n">% de las órdenes del 1º</th><th class="n">Ticket combo USD</th><th>Solidez</th></tr></thead>
+    <tbody id="tbBundles"></tbody>
+  </table></div>
+  <div class="read"><span class="eyebrow">Qué significa esto</span>
+    <p>Hay dos combinaciones con volumen real. <b>Nova Head Piece con Mono Willow</b>: 24% de las órdenes de Nova. <b>Mist Head Piece con Vestido Hera</b>: 26% de las de Mist. En los dos casos el tocado funciona como complemento del look. El resto son pares de 3 o 4 órdenes y pueden ser coincidencia. Pareo y Bikini Wild Skin (3 de 5 órdenes) es coherente porque son el mismo estampado, pero la base es mínima. Como el ticket combinado vale 76% más y quien compra 2+ prendas recompra el doble, el complemento sube el ticket y también la retención.</p>
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="acciones">
+  <div class="sec-head"><span class="eyebrow">12 · Recomendaciones accionables</span><h2>Plan de acción</h2></div>
+  <ol class="recs">
+    <li><span class="pill alta">ALTA</span><div><b>Lanzar la campaña de reactivación con dos envíos: día 60 sin cupón y día 300 con cupón.</b><span>Arrancar ya con las 209 clientas de la cohorte de fiestas 2025 que están en la ventana de último llamado, antes de la temporada alta.</span><span class="src">Surge de 03 y 06</span></div></li>
+    <li><span class="pill alta">ALTA</span><div><b>Empujar la segunda prenda en la primera compra</b> con un tocado sugerido junto a Hera y Willow, un "completá el look" en la ficha y un beneficio desde 2 prendas.<span>La primera compra con 2+ unidades recompra el doble (13,2% vs 6,8%) y el ticket combinado vale +76%.</span><span class="src">Surge de 05 y 11</span></div></li>
+    <li><span class="pill alta">ALTA</span><div><b>No subir más la inversión en Meta hasta diagnosticar la suba del CPM</b> (fatiga creativa, frecuencia, audiencias, objetivo de campaña). Fijar un techo de costo por venta estimado de referencia.<span>La inversión se duplicó y la facturación creció 18%. Dos tercios del deterioro vienen del CPM y un tercio de la conversión.</span><span class="src">Surge de 00 y 09</span></div></li>
+    <li><span class="pill media">MEDIA</span><div><b>Reasignar presupuesto de Provincia de Buenos Aires hacia CABA, y cortar Corrientes, Formosa, Chaco, La Pampa y Jujuy.</b><span>CABA tiene ROAS estimado 12,7 contra 9,6 de Provincia. Las provincias recortadas suman unos USD 280 sin ventas relevantes.</span><span class="src">Surge de 08</span></div></li>
+    <li><span class="pill media">MEDIA</span><div><b>Armar el Club VIP con corte en 3+ compras:</b> acceso anticipado a la colección, atención personalizada en el showroom y un objetivo claro para las 40 clientas de 2 compras.<span>Es el quiebre más marcado entre recompradoras. Una clienta VIP vale USD 954.</span><span class="src">Surge de 04</span></div></li>
+    <li><span class="pill media">MEDIA</span><div><b>Armar una secuencia post-compra para quien compró un vestido de ocasión (Hera, Ámbar, Arya)</b> que muestre sets, tapados y básicos de guardarropa.<span>Esas entradas recompran 0–3%, contra 14–17% de sets y tapados.</span><span class="src">Surge de 05 y 10</span></div></li>
+    <li><span class="pill cond">COND.</span><div><b>Testear el cupón del segundo envío con un grupo sin cupón.</b><span>Hoy no hay evidencia sobre cupones: solo 5 primeras compras los usaron.</span><span class="src">Surge de 05 y 06</span></div></li>
+    <li><span class="pill cond">COND.</span><div><b>Si existe un descuento por transferencia, destacarlo en la segunda compra.</b><span>Quien paga por transferencia recompra 10,3% contra 7,0% con tarjeta. Primero hay que validar si el descuento existe y cuál es su margen.</span><span class="src">Surge de 05 y 07</span></div></li>
+    <li><span class="pill cond">COND.</span><div><b>Validar si las compras repetidas dentro de los 15 días son cambios de talle.</b><span>Si lo son, conviene sacarlas de la tasa de recompra y revisar la guía de talles.</span><span class="src">Surge de 06</span></div></li>
+  </ol>
+</section>
+
+<!-- 13 -->
+<section id="cierre">
+  <div class="sec-head"><span class="eyebrow">13 · Cierre</span><h2>3 decisiones para salir de la reunión con claridad</h2></div>
+  <div class="decisions">
+    <div class="decision"><div><b>Lanzar este mes la reactivación con las dos ventanas (día 60 y día 300)</b><span class="muted">¿Sí o no? Si es sí, se empieza por la cohorte de fiestas 2025 antes de octubre.</span></div></div>
+    <div class="decision"><div><b>Definir el Club VIP con corte en 3+ compras</b><span class="muted">¿Se acepta el corte y qué beneficio concreto ofrece el showroom?</span></div></div>
+    <div class="decision"><div><b>Congelar la inversión en Meta y reasignar hacia CABA hasta bajar el costo por venta</b><span class="muted">¿Qué costo por venta estimado se toma como techo aceptable?</span></div></div>
+  </div>
+  <h3>Preguntas que el dato no puede responder solo</h3>
+  <ol class="qs">
+    <li>¿Qué pasó en septiembre 2025? ¿Hubo falta de stock, cambio de temporada o una pausa de campañas?</li>
+    <li>¿Noviembre y diciembre 2025 tuvieron un lanzamiento, una colección de fiesta o una acción puntual que se pueda repetir?</li>
+    <li>¿Hay descuento por transferencia? ¿Cuánto cuesta el financiamiento en 3 cuotas sin interés?</li>
+    <li>Las compras que se repiten dentro de los 15 días, ¿son cambios de talle, complementos o nuevas compras?</li>
+    <li>¿El showroom vende por fuera de Tiendanube? Si es así, la recompra real podría ser mayor que la medida.</li>
+    <li>¿Qué objetivo de optimización y ventana de atribución usan hoy las campañas? Meta reporta ROAS 4,8 en septiembre contra 5,7 estimado sobre ventas totales.</li>
+    <li>¿Hay stock y reposición de Set Solaris y Tapado Mica, los productos de entrada que más fidelizan, para la próxima temporada?</li>
+  </ol>
+</section>
+
+<footer>
+  <p>Datos: API de Tiendanube (pedidos pagos, no cancelados, con montos en USD según la cotización que registra Tiendanube por pedido) y cuenta publicitaria de Meta de Desebia (en USD, datos desde abril 2025). Clientas identificadas por su ID de cliente. Recompra real medida sobre clientas con 60+ días desde su primera compra.</p>
+  <p>Be Perfo · Informe generado el 28/09/2026</p>
+</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const D = __DATA__;
+const css = getComputedStyle(document.documentElement);
+const C = { accent: css.getPropertyValue('--accent').trim(), fg: css.getPropertyValue('--fg').trim(),
+  muted: css.getPropertyValue('--muted').trim(), line: css.getPropertyValue('--line').trim(), grey: '#8a8a82' };
+const fmt = (n, d = 0) => n == null ? '–' : Number(n).toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const MES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const mlabel = m => MES[+m.slice(5) - 1] + '-' + m.slice(2, 4);
+const $ = id => document.getElementById(id);
+const bar = (v, max, alt) => `<span class="bar${alt ? ' alt' : ''}" style="width:${Math.max(2, Math.round(90 * v / max))}px"></span>`;
+
+// tablas
+$('tbUmbrales').innerHTML = D.umbrales.slice(0, 5).map((u, i, a) => `<tr class="${u.n === 3 ? 'hl' : ''}"><td style="white-space:nowrap">${u.n}+ compras</td><td class="n">${u.clientes}</td><td class="n">${fmt(u.pct, 1)}%</td><td class="n">${i ? fmt(100 * u.clientes / a[i - 1].clientes, 0) + '%' : '–'}</td></tr>`).join('');
+
+const LECT = {
+  cupon: 'Base mínima (5 clientas): sin evidencia', entrega: 'Sin diferencia: no es palanca', pago: 'Transferencia recompra más',
+  cuotas: '1 pago recompra más que 3 cuotas', dispositivo: 'Sin diferencia', zona: 'Diferencia menor', ticket: 'Forma de U: extremos recompran más',
+  unidades: 'La señal más fuerte: el doble'
+};
+const NAMES = { unidades: 'Unidades', ticket: 'Ticket 1ª compra', pago: 'Forma de pago', cuotas: 'Cuotas', entrega: 'Entrega', cupon: 'Cupón', zona: 'Zona', dispositivo: 'Dispositivo' };
+let rows = '';
+for (const k of ['unidades', 'ticket', 'pago', 'cuotas', 'entrega', 'cupon', 'zona', 'dispositivo']) {
+  const list = D.correlaciones[k].filter(r => r.clientes >= 5 || k === 'cupon');
+  list.forEach((r, i) => {
+    rows += `<tr class="${r.clientes < 20 ? 'weak' : ''}"><td>${i ? '' : NAMES[k]}</td><td>${r.valor}</td><td class="n">${r.clientes}</td><td class="n">${fmt(r.recompra, 1)}%</td><td>${bar(r.recompra, 14)}</td><td class="small muted">${i ? '' : LECT[k]}</td></tr>`;
+  });
+}
+$('tbCorr').innerHTML = rows;
+$('tbEntrada').innerHTML = D.producto_entrada.map(r => `<tr><td>${r.producto}</td><td class="n">${r.clientes}</td><td class="n">${fmt(r.recompra, 1)}%</td><td>${bar(r.recompra, 17)}</td></tr>`).join('');
+const simple = (id, list) => $(id).innerHTML = list.filter(r => r.ordenes >= 2).map(r => `<tr><td>${r.valor}</td><td class="n">${r.ordenes}</td><td class="n">${fmt(r.pct, 1)}%</td><td class="n">${r.ticket_usd || '–'}</td></tr>`).join('');
+simple('tbPago', D.pago.filter(r => r.valor !== 'Tarjeta de débito' && r.valor !== 'Otro')); simple('tbCuotas', D.cuotas); simple('tbEntrega', D.entrega.filter(r => r.valor !== 'Otro')); simple('tbZona', D.zona);
+const pmax = D.provincias[0].ordenes;
+$('tbProv').innerHTML = D.provincias.slice(0, 10).map(r => `<tr><td>${r.provincia.replace('Capital Federal', 'CABA')}</td><td class="n">${r.ordenes}</td><td class="n">${fmt(r.pct, 1)}%</td><td>${bar(r.ordenes, pmax)}</td></tr>`).join('');
+
+$('tbGeo').innerHTML = D.geo.rows.map(r => {
+  const diff = r.pct_facturacion - r.pct_inversion;
+  let tag = '<span class="pill low">Base chica</span>';
+  if (r.ordenes >= 30) tag = diff > 2 ? '<span class="pill ok">Subrepresentada</span>' : diff < -1 ? '<span class="pill no">Sobreinvertida</span>' : '<span class="pill low">En línea</span>';
+  else if (r.ordenes <= 2) tag = '<span class="pill no">Recortar</span>';
+  return `<tr class="${r.ordenes < 10 && r.ordenes > 2 ? 'weak' : ''}"><td>${r.region}</td><td class="n">${fmt(r.pct_inversion, 1)}%</td><td class="n">${fmt(r.pct_facturacion, 1)}%</td><td>${bar(r.pct_inversion, 45, true)}<br>${bar(r.pct_facturacion, 45)}</td><td class="n">${r.ordenes}</td><td class="n">${r.cpa_est == null ? '–' : fmt(r.cpa_est, 1)}</td><td class="n">${fmt(r.roas_est, 1)}</td><td>${tag}</td></tr>`;
+}).join('');
+
+$('tbBundles').innerHTML = D.bundles.slice(0, 10).map(b => `<tr class="${b.solido ? 'hl' : 'weak'}"><td>${b.a}</td><td>${b.b}</td><td class="n">${b.ordenes}</td><td class="n">${fmt(b.pct_sobre_a, 0)}% <span class="muted">(de ${b.base_a})</span></td><td class="n">${b.ticket_combo_usd}</td><td>${b.solido ? '<span class="pill ok">Volumen real</span>' : '<span class="pill low">Base chica</span>'}</td></tr>`).join('');
+
+// gráficos
+if (window.Chart) {
+  Chart.defaults.color = C.muted;
+  Chart.defaults.borderColor = C.line;
+  Chart.defaults.font.family = '"DM Mono", ui-monospace, monospace';
+  Chart.defaults.font.size = 11;
+  Chart.defaults.plugins.legend.display = false;
+  Chart.defaults.maintainAspectRatio = false;
+  Chart.defaults.plugins.tooltip.backgroundColor = '#1d1d1d';
+  const grid = { color: C.line, drawTicks: false };
+  const ms = D.mensual.filter(m => m.mes >= '2025-02');
+  new Chart($('chMensual'), {
+    data: { labels: ms.map(m => mlabel(m.mes)), datasets: [
+      { type: 'bar', label: 'Facturación USD', data: ms.map(m => m.usd), backgroundColor: ms.map(m => m.mes === '2025-12' ? C.accent : m.mes === '2025-09' ? '#ff7a6b' : 'rgba(172,212,0,.55)'), yAxisID: 'y', borderRadius: 2 },
+      { type: 'line', label: 'Órdenes', data: ms.map(m => m.ordenes), borderColor: C.fg, backgroundColor: C.fg, pointRadius: 2.5, borderWidth: 1.5, yAxisID: 'y2', tension: .25 } ] },
+    options: { interaction: { mode: 'index', intersect: false }, scales: {
+      y: { grid, ticks: { callback: v => 'USD ' + fmt(v / 1000) + 'k' } }, y2: { position: 'right', grid: { display: false }, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+  });
+  new Chart($('chRec'), { type: 'bar',
+    data: { labels: D.recurrencia.map(r => r.compras + (r.compras === '1' ? ' compra' : ' compras')), datasets: [{ data: D.recurrencia.map(r => r.clientes), backgroundColor: D.recurrencia.map((r, i) => i >= 2 ? C.accent : i === 1 ? 'rgba(172,212,0,.6)' : C.grey), borderRadius: 2 }] },
+    options: { scales: { y: { type: 'logarithmic', grid, ticks: { callback: v => [1, 10, 100, 1000].includes(v) ? v : '' } }, x: { grid: { display: false } } },
+      plugins: { tooltip: { callbacks: { label: c => fmt(c.raw) + ' clientas (' + fmt(D.recurrencia[c.dataIndex].pct, 1) + '%)' } } } } });
+  const h = D.tiempo_recompra.hist;
+  new Chart($('chGap'), { type: 'bar',
+    data: { labels: h.map(x => x.rango + ' d'), datasets: [{ data: h.map(x => x.n), backgroundColor: h.map(x => x.rango === '60–90' || x.rango === '270+' ? C.accent : C.grey), borderRadius: 2 }] },
+    options: { scales: { y: { grid, ticks: { precision: 0 }, title: { display: true, text: 'recompradoras' } }, x: { grid: { display: false }, title: { display: true, text: 'días entre 1ª y 2ª compra' } } } } });
+  const cp = D.cpm;
+  new Chart($('chCpm'), {
+    data: { labels: cp.map(m => mlabel(m.mes)), datasets: [
+      { type: 'line', label: 'CPM USD', data: cp.map(m => m.cpm), borderColor: C.accent, backgroundColor: C.accent, yAxisID: 'y', pointRadius: 3, borderWidth: 2, tension: .25 },
+      { type: 'bar', label: 'Órdenes', data: cp.map(m => m.ordenes), backgroundColor: 'rgba(138,138,130,.55)', yAxisID: 'y2', borderRadius: 2 } ] },
+    options: { interaction: { mode: 'index', intersect: false }, scales: {
+      y: { grid, ticks: { callback: v => 'USD ' + v }, beginAtZero: true }, y2: { position: 'right', grid: { display: false }, ticks: { precision: 0 }, beginAtZero: true }, x: { grid: { display: false } } } }
+  });
+  const pr = D.productos;
+  new Chart($('chProd'), { type: 'bar',
+    data: { labels: pr.map(p => p.producto), datasets: [{ data: pr.map(p => p.unidades), backgroundColor: pr.map((p, i) => i < 2 ? C.accent : 'rgba(172,212,0,.5)'), borderRadius: 2 }] },
+    options: { indexAxis: 'y', scales: { x: { grid, title: { display: true, text: 'unidades' } }, y: { grid: { display: false }, ticks: { color: C.fg, font: { family: '"DM Sans", system-ui, sans-serif', size: 12 } } } },
+      plugins: { tooltip: { callbacks: { label: c => `${pr[c.dataIndex].unidades} u · USD ${fmt(pr[c.dataIndex].usd)}` } } } } });
+}
+</script>

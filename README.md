@@ -30,3 +30,12 @@ python3 tiendanube/tn.py clientes
 - Las fechas son de creación del pedido, en hora de Argentina (-03:00), con `--hasta` inclusive.
 - Salida: `datos/*.csv`.
 - Respeta el límite de la API (bucket de 40 req, 2 req/s): reintenta ante 429 y errores 5xx.
+
+## Informe de análisis de ventas
+
+```bash
+python3 tiendanube/tn.py crudo --tienda Desebia --estado-pago any          # pedidos completos en JSON
+python3 analisis/analisis_ventas.py datos/pedidos_desebia_<id>.json datos/meta_desebia.json > datos/metricas.json
+```
+
+`analisis_ventas.py` calcula KPIs, recurrencia, corte VIP, recompra real (60+ días), tiempos de recompra, pago/cuotas/geografía, cruce con Meta por región y CPM, top productos y bundles. `informe_template.html` es la plantilla del informe (estilo Be Perfo), a la que se le inyectan las métricas en el lugar de `__DATA__`. Los textos de interpretación se escriben para cada tienda.
