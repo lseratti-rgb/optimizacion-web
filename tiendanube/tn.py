@@ -88,9 +88,9 @@ class Client:
                 if e.code >= 500 and attempt < retries - 1:
                     time.sleep(2 ** attempt)
                     continue
-                if e.code == 404 and params and params.get("page", 1) > 1:
-                    return []  # pasamos la última página
                 body = e.read().decode(errors="replace")[:300]
+                if e.code == 404 and params and "page" in params and "Last page" in body:
+                    return []  # sin resultados, o pasamos la última página
                 raise RuntimeError(f"HTTP {e.code} en {path}: {body}") from None
             except urllib.error.URLError:
                 if attempt == retries - 1:
