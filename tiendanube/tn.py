@@ -4,7 +4,7 @@
 Credenciales (nunca se commitean):
   TIENDANUBE_STORES      JSON con las tiendas:
                          [{"name": "Marca A", "store_id": "123", "token": "..."}]
-                         (alternativa: archivo tiendanube/stores.json con el mismo formato)
+                         (y/o archivo tiendanube/stores.json con el mismo formato; se suman)
   TIENDANUBE_USER_AGENT  Obligatorio para la API, ej: "Mi App (contacto@midominio.com)"
 
 Uso:
@@ -39,12 +39,15 @@ OUT_DIR = ROOT.parent / "datos"
 
 
 def load_stores():
-    raw = os.environ.get("TIENDANUBE_STORES")
-    if not raw and (ROOT / "stores.json").exists():
-        raw = (ROOT / "stores.json").read_text()
-    if not raw:
+    # Se combinan las dos fuentes; si una tienda está en ambas, gana stores.json (token más nuevo).
+    by_id = {}
+    for raw in (os.environ.get("TIENDANUBE_STORES"),
+                (ROOT / "stores.json").read_text() if (ROOT / "stores.json").exists() else None):
+        for s in json.loads(raw) if raw else []:
+            by_id[str(s.get("store_id"))] = s
+    stores = list(by_id.values())
+    if not stores:
         sys.exit("Falta TIENDANUBE_STORES (o tiendanube/stores.json). Ver README.")
-    stores = json.loads(raw)
     for s in stores:
         missing = {"store_id", "token"} - s.keys()
         if missing:

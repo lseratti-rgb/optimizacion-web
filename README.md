@@ -39,3 +39,10 @@ python3 analisis/analisis_ventas.py datos/pedidos_desebia_<id>.json datos/meta_d
 ```
 
 `analisis_ventas.py` calcula KPIs, recurrencia, corte VIP, recompra real (60+ días), tiempos de recompra, pago/cuotas/geografía, cruce con Meta por región y CPM, top productos y bundles. `informe_template.html` es la plantilla del informe (estilo Be Perfo), a la que se le inyectan las métricas en el lugar de `__DATA__`. Los textos de interpretación se escriben para cada tienda.
+
+### Sumar una tienda nueva (o renovar un token)
+
+1. Con la sesión iniciada en el admin de la tienda, abrir `https://www.tiendanube.com/apps/<APP_ID>/authorize` y aceptar.
+2. Tiendanube redirige a la URL de redirección de la app con `?code=XXXX` (vence en minutos, se usa una vez).
+3. Canjearlo enseguida: `python3 tiendanube/oauth_token.py --code XXXX --nombre "Marca"`
+   (usa `TIENDANUBE_CLIENT_ID` / `TIENDANUBE_CLIENT_SECRET`, o los pide por consola). Queda guardada en `tiendanube/stores.json`, que se suma a `TIENDANUBE_STORES`.
