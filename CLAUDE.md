@@ -11,7 +11,26 @@ Están en la configuración del entorno, nunca en el repo ni en el chat:
 
 No pidas tokens por el chat. Si una tienda no aparece en `python3 tiendanube/tn.py tiendas`, explicá que hay que instalar la app en esa tienda (`https://<tienda>.mitiendanube.com/admin/apps/42381/authorize`) y sumar su token a `TIENDANUBE_STORES` en la configuración del entorno. La app de Railway guarda el token en Supabase, en la tabla `provider_connections`.
 
-## Cómo consultar
+## Consultas rápidas: Supabase (conector)
+
+Si el conector de Supabase está disponible, las ventas diarias de todas las tiendas ya están cargadas por la app de Railway (proyecto `rarqcksjakfexhpasivd`, se actualiza una vez por día; el dato llega hasta ayer):
+
+```sql
+select c.name as cliente, sa.external_account_id as store_id,
+       sum(dm.ecommerce_orders) as pedidos, round(sum(dm.ecommerce_revenue)) as facturacion
+from daily_metrics dm
+join source_accounts sa on sa.id = dm.source_account_id
+left join clients c on c.id = sa.client_id
+where dm.provider = 'TIENDA_NUBE' and dm.date between '2026-10-01' and '2026-10-31'
+group by 1, 2 order by 1;
+```
+
+- `daily_metrics` también trae inversión y resultados de Meta, Google y GA4 por día (`provider`, `spend`, `platform_conversions`, `ga4_sessions`, etc.).
+- Solo lectura: no ejecutes `insert`, `update`, `delete` ni migraciones.
+- No selecciones `provider_connections.access_token`.
+- Para el detalle (productos, provincias, cupones, pedidos de hoy) usá la API con `tn.py`.
+
+## Cómo consultar la API de Tiendanube
 
 ```bash
 python3 tiendanube/tn.py tiendas                                    # lista las tiendas y valida los tokens
